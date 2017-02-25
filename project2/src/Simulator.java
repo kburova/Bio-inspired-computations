@@ -1,4 +1,4 @@
-/* Activation/Inhibition Cellular Automaton Simulator
+/* Activation/Inhibition Cellular Automaton Simulator/
    Written by: Ksenia Burova
    February 19, 2017
  */
@@ -124,7 +124,6 @@ public class Simulator {
 
             ro_l = Math.abs(FirstTerm - Math.pow((iSumm / Math.pow(SpaceSize,2) ),2));
             Correlation[d] = ro_l;
-            //System.out.printf("Distance - %d , Correlation - %f%n", d, ro_l);
         }//d
     }
 
@@ -190,34 +189,29 @@ public class Simulator {
 
                 }//i2
             }//i1
-            System.out.printf("SumP: %f, SumN: %f%n", PosSum,NegSum);
-            if (d != 0) {
-                coeff = 1 / (Math.pow(SpaceSize, 2) * 4 * d);
-                Pr_plus = coeff*PosSum;
-                Pr_minus= coeff*NegSum;
-                Pr_plus_minus = 1 - Pr_plus - Pr_minus;
-                System.out.printf("plus- %f,minus- %f,sum- %f%n",Pr_plus,Pr_minus,Pr_plus_minus);
 
-                if (Pr_plus == 0)
-                    term1 = 0;
-                else
-                    term1 = Pr_plus * Math.log(Pr_plus);
+            coeff = 1 / (Math.pow(SpaceSize, 2) * 4 * d);
+            Pr_plus = coeff*PosSum;
+            Pr_minus= coeff*NegSum;
+            Pr_plus_minus = 1 - Pr_plus - Pr_minus;
 
-                if (Pr_minus == 0)
-                    term2 = 0;
-                else
-                    term2 = Pr_minus * Math.log(Pr_minus);
+            if (Pr_plus == 0)
+                term1 = 0;
+            else
+                term1 = Pr_plus * Math.log(Pr_plus);
 
-                if (Pr_plus_minus == 0)
-                    term3 = 0;
-                else
-                    term3 = Pr_plus_minus * Math.log(Pr_plus_minus);
+            if (Pr_minus == 0)
+                term2 = 0;
+            else
+                term2 = Pr_minus * Math.log(Pr_minus);
 
-                Entropy = -(term1 + term2 + term3);
-                //System.out.printf("t1- %f,t2- %f, t3 - %f, Pr - %f Ent- %f%n",term1,term2,term3,Pr_plus_minus,Entropy);
+            if (Pr_plus_minus == 0)
+                term3 = 0;
+            else
+                term3 = Pr_plus_minus * Math.log(Pr_plus_minus);
 
-            }else
-                Entropy = 0;
+            Entropy = -(term1 + term2 + term3);
+
 
             JointEntropy[d] = Entropy;
 
@@ -260,21 +254,24 @@ public class Simulator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //writeToHTML( index);
     }
 
     //write to HTML
-    final public void writeToHTML(int ExpNumber){
+    final public void writeToHTML(int ExpNumber, int NumOfCombinations, String path){
         try{
-            //FileWriter writer = new FileWriter(System.getProperty("user.home") + "/hello.html");
-            //writer.write(htmlBuilder.toString()); used string builder
-            File f = new File("Experiment_"+ Integer.toString(ExpNumber) + ".html");
+            File f = new File(path+"/Experiment_"+ Integer.toString(ExpNumber) + ".html");
             FileOutputStream fs = new FileOutputStream(f);
             BufferedWriter bwh = new BufferedWriter(new OutputStreamWriter(fs));
-            bwh.write("<html><head><title>Experiment "+ExpNumber+"</title></head>\n");
-            bwh.write("<img src=\"Pic_" + Integer.toString(ExpNumber) + ".png\" style=\"image-rendering: pixelated;\" height=\"100\" width=\"100\"/>\n");
-
-
+            bwh.write("<html><head><title>Experiment "+ExpNumber+"</title></head><body><table >\n");
+            for (int i = 1; i <= NumOfCombinations; i++ ){
+                bwh.write("<tr><th colspan = \"4\">Combination "+i+"</th></tr>");
+                bwh.write("<tr><td>Run 1</td> <td>Run 2</td> <td>Run 3</td> <td>Run 4</td></tr>  <tr>");
+                for (int j = 1; j <= 4; j++){
+                    bwh.write("<td><img src=\"Combination_"+Integer.toString(i)+"/Run_"+Integer.toString(j)+ ".png\" style=\"image-rendering: pixelated;\" height=\"100\" width=\"100\"/></td>");
+                }
+                bwh.write("</tr>");
+            }
+            bwh.write("</table>");
             fs.flush();
             bwh.flush();
             fs.close();
@@ -365,8 +362,6 @@ public class Simulator {
                     default:
                         break;
                 }
-                //TODO: create HTML for each experiment
-                //TODO: split it into such View
 
                 for (int j = 0; j < numOfCombinations; j++){
                     String path = "Experiments/Experiment_"+ i +"/Combination_" + (j+1);
@@ -375,21 +370,16 @@ public class Simulator {
                     bw.write("J1="+j1+",J2="+j2+",H="+H+",R1="+R1+",R2="+R2+"\n\n\n");
                     bw.write("Distance(L), Correlation(p), Joint Entropy(H_l), MutualInfo(I_l)\n\n");
 
-                    //TODO: HTML  Combination row
-
                     double CorAverage[] = new double[15];
                     double EntropyAverage[] = new double[15];
                     double MutInfAverage[] = new double[15];
                     double LambdaAve = 0, EntropyAve = 0;
                     for (int r = 1; r < 5; r++){
-                        //TODO: HTML TABLE
-                        // Run1, Run2, Run3, Run4
-                        // Pic1, Pic2, Pic3, Pic4
                         initilize( possibleR1[j], possibleR2[j], possibleh[j], j1, j2);
                         updateTheGrid();
                         calcAll();
                         //add up all runs results
-                        for (int it = 0; it < 15; it++){
+                        for (int it = 1; it < 15; it++){
                             CorAverage[it] += Correlation[it];
                             EntropyAverage[it] += JointEntropy[it];
                             MutInfAverage[it] += MutualInformation[it];
@@ -400,7 +390,7 @@ public class Simulator {
                         createPNG( path,r);
                     }
                     //Calculate an average for all runs and output to CSV:
-                    for (int it = 0; it < 15; it++){
+                    for (int it = 1; it < 15; it++){
                         CorAverage[it] /= 4.0;
                         EntropyAverage[it] /= 4.0;
                         MutInfAverage[it] /= 4.0;
@@ -411,11 +401,9 @@ public class Simulator {
                     bw.write("Entropy(H):,"+EntropyAve+",Lambda:," + LambdaAve +"\n\n\n");
 
                 }
+                writeToHTML(i,possibleh.length, "Experiments/Experiment_"+ i);
 
             }
-//            System.out.print(possibleR1.length);
-//            System.out.print(possibleR2.length);
-//            System.out.print(possibleh.length);
             bw.flush();
             bw.close();
         }catch (IOException e){
@@ -423,29 +411,7 @@ public class Simulator {
         }
     }
     public static void main(String[] args) {
-
         Simulator s = new Simulator();
         s.simulate();
-//        if (args.length != 5) {
-//            System.out.println("Usage: java Simulator");
-//            System.exit(1);
-//        }
-
-//        Simulator s = new Simulator(Double.parseDouble(args[0]),
-//                Double.parseDouble(args[1]),
-//                Double.parseDouble(args[2]),
-//                Double.parseDouble(args[3]),
-//                Double.parseDouble(args[4]));
-//
-//
-//        s.print();
-//        s.createJpeg(0);
-//        s.updateTheGrid();
-//        s.createJpeg(1);
-//        double [] rv = s.calculateCorrelations();
-//        for (double d : rv )
-//            System.out.printf( "%f ", d);
-//
-//        s.calculateEntropy();
     }
 }
