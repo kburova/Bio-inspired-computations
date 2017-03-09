@@ -338,9 +338,9 @@ public class Simulator {
                     case(1):
                         bw.write(" Experiment #, 1\n\n");
                         j1 = 1; j2 = 0;
-                        possibleR1 = new int[]{ 1,3,6,3};
-                        possibleR2 = new int[]{ 15,15,15,9};
-                        possibleh =  new int[]{ -1,-1,-2,0};
+                        possibleR1 = new int[]{ 1,3,6,3, 1};
+                        possibleR2 = new int[]{ 15,15,15,9,15};
+                        possibleh =  new int[]{ -1,-1,-2,0, 3};
                         numOfCombinations = possibleh.length;
                         break;
                     case(2):
@@ -367,8 +367,8 @@ public class Simulator {
                     String path = "Experiments/Experiment_"+ i +"/Combination_" + (j+1);
                     new File( path ).mkdir();
                     bw.write("Combination "+ (j+1) + "\n");
-                    bw.write("J1="+j1+",J2="+j2+",H="+H+",R1="+R1+",R2="+R2+"\n\n\n");
-                    bw.write("Distance(L), Correlation(p), Joint Entropy(H_l), MutualInfo(I_l)\n\n");
+                    bw.write("J1="+j1+",J2="+j2+",H="+possibleh[j]+",R1="+possibleR1[j]+",R2="+possibleR2[j]+"\n\n\n");
+                    bw.write("Distance(L), Correlation(p), Joint Entropy(H_l), MutualInfo(I_l)\n");
 
                     double CorAverage[] = new double[15];
                     double EntropyAverage[] = new double[15];
@@ -394,11 +394,11 @@ public class Simulator {
                         CorAverage[it] /= 4.0;
                         EntropyAverage[it] /= 4.0;
                         MutInfAverage[it] /= 4.0;
-                        bw.write(it+","+CorAverage[it]+","+EntropyAverage[it]+","+ MutInfAverage[it]+"\n\n");
+                        bw.write(it+","+CorAverage[it]+","+EntropyAverage[it]+","+ MutInfAverage[it]+"\n");
                     }
                     LambdaAve /= 4.0;
                     EntropyAve /= 4.0;
-                    bw.write("Entropy(H):,"+EntropyAve+",Lambda:," + LambdaAve +"\n\n\n");
+                    bw.write("Entropy(H):,"+EntropyAve+",Lambda:," + LambdaAve +"\n\n");
 
                 }
                 writeToHTML(i,possibleh.length, "Experiments/Experiment_"+ i);
