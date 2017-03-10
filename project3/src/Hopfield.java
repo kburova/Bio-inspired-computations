@@ -12,14 +12,37 @@ public class Hopfield {
 
     // vector of 50 patterns, each pattern has 100 elements
     private int patterns [][];
-    private double weights[][];
     private int N, numOfNets;
+    private double numOfStablePatternsAverage[];
     private int numOfStablePatterns[];
+    private double unstableProbability[];
+    private double unstableProbabilityAve[];
+    private double basins[];
+    private int numOfExperiments;
 
-    public Hopfield (){
-        initilize();
-        imprintPatterns();
-        testStability();
+    public Hopfield (int num){
+
+        N = 100;
+        numOfNets = 50;
+        numOfExperiments = num;
+
+        numOfStablePatternsAverage = new double[numOfNets];
+        unstableProbabilityAve = new double[numOfNets];
+
+        for (int i = 0; i < numOfExperiments; i++){
+            //System.out.println(i);
+            initilize();
+            testStability();
+            for (int j = 0; j < numOfNets; j++){
+                numOfStablePatternsAverage[j] += numOfStablePatterns[j];
+                unstableProbabilityAve[j] += unstableProbability[j];
+            }
+        }
+
+        for (int j = 0; j < numOfNets; j++){
+            numOfStablePatternsAverage[j] /= numOfExperiments*1.0;
+            unstableProbabilityAve[j] /= numOfExperiments*1.0;
+        }
         printToCSV();
     }
     
@@ -27,12 +50,11 @@ public class Hopfield {
     public void initilize() {
 
         int r;
-        N = 100;
-        numOfNets = 50;
         Random rand = new Random();
-        weights = new double [N][];
         patterns = new int[numOfNets][];
+        basins = new double[numOfNets];
         numOfStablePatterns = new int[numOfNets];
+        unstableProbability = new double[numOfNets];
 
         //init elements to 1 or -1.
         for (int i = 0; i < numOfNets; i++){
@@ -41,53 +63,69 @@ public class Hopfield {
                 r = rand.nextInt(2);
                 if (r == 0) r = -1;
                 patterns[i][j] = r;
+                //System.out.printf("%2d ", r);
             }
-        }
-        for (int i = 0; i < N; i++){
-            weights[i] = new double[N];
+            //System.out.println();
         }
     }
 
-    public void  imprintPatterns() {
+    public void  testStability() {
 
-        for (int i = 0; i < N; i++){
-            for (int j = 0; j < N; j++){
-                for (int k = 0; k < numOfNets; k++) {
-                    if (i == j) weights[i][j] = 0;
-                    weights[i][j] += patterns[k][i] * patterns[k][j];
-                }
-                // divide weight by 100
-                weights[i][j] /= N * 1.0;
-            }
+        double h;
+        int newState;
+        boolean stable;
+        double w[][] =  new double[N][];
+        for (int i = 0; i < N; i++ ) {
+            w[i] = new double[N];
         }
+        //going through each pattern
+        for (int p = 0; p < numOfNets; p++){
+
+            for (int i = 0; i < N; i++ ){
+                for (int j = 0;j < N; j++) {
+                    w[i][j] += (patterns[p][i] * patterns[p][j])/100.0;
+                    //System.out.printf("%5.2f ",w[i][j]);
+                }
+                //System.out.println();
+            }
+
+            //check for stability
+            for (int k = 0; k <= p ; k++){
+                stable = true;
+
+                for (int i = 0; i < N; i++){
+                    h = 0.0;
+                    for (int j = 0; j < N; j++){
+                        h += (w[i][j] * patterns[k][j]);
+                    }
+
+                    if (h < 0) newState = -1;
+                    else newState = 1;
+
+                    if (patterns[k][i] != newState){
+                        stable = false;
+                        break;
+                    }
+                }
+                if (stable){
+                    //System.out.printf("p:%d k:%d\n", p, k );
+                    numOfStablePatterns[p] += 1;
+
+
+                    // generate array of numbers 1-100 in random order
+                    // for (i = 0; i < 50; i++){
+                    //  net[] = pattens[k];
+                    //      for (j = 0; j < 10;j++)
+                    //
+                }else{
+                   basins[p] = 0.0;
+                }
+            }
+            unstableProbability[p] = 1 - numOfStablePatterns[p]/(1.0 * (p+1));
+        }
+
     }
 
-    public void testStability(){
-
-        double h, newState, numOfUnStable = 0;
-        boolean isStable;
-
-        for (int k = 0; k < numOfNets; k++){
-            isStable = true;
-            for (int i = 0; i < N; i++){
-                h = 0;
-                for (int j = 0; j < N; j++){
-                    h += weights[i][j] * patterns[k][j];
-                }
-                System.out.printf("h: %f\n", h);
-                if ( h < 0) newState = -1;
-                else newState = 1;
-
-                //if state differs, mark it unstable, but mark it once by including bool into conditional
-                if (isStable && newState != patterns[k][i]){
-                    isStable = false;
-                    numOfUnStable++;
-                }
-            }
-            System.out.printf("P: %d, Stable: %b\n", k, isStable);
-            numOfStablePatterns[k] = (int) (k + 1 - numOfUnStable);
-        }
-    }
     private void printToCSV(){
         try {
             File file = new File("MasterExperiment.csv");
@@ -96,7 +134,7 @@ public class Hopfield {
             csvDoc.write(" Name:, Ksenia, Burova, CS420 \n\n");
             csvDoc.write(" p #, Num of Stable, Fraction of Unstable\n");
             for (int i = 0; i < numOfNets; i++){
-                csvDoc.write( (i+1) + "," + numOfStablePatterns[i] + "," + (1 - (numOfStablePatterns[i]*1.0/(i+1))) + "\n");
+                csvDoc.write( (i+1) + "," + numOfStablePatternsAverage[i] + "," + unstableProbabilityAve[i] + "\n");
             }
 
             csvDoc.flush();
@@ -107,6 +145,7 @@ public class Hopfield {
     }
 
     public static void main(String[] args) {
-        Hopfield h = new Hopfield();
+
+        Hopfield h = new Hopfield(100);
     }
 }
