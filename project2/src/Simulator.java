@@ -16,7 +16,7 @@ public class Simulator {
     private double[] Correlation;
     private double[] JointEntropy;
     private double[] MutualInformation;
-    private double lambda, entropy;
+    private double lambda, entropy;c
 
     //initialize 30x30 dimension space randomly to 1 or -1 and set all params
     public void initilize(double r1,double r2,double h,double j1,double j2){
@@ -406,9 +406,6 @@ public class Simulator {
             }
             bw.flush();
             bw.close();
-        }catch (IOException e){
-            e.getStackTrace();
-        }
     }
     public static void main(String[] args) {
         Simulator s = new Simulator();
