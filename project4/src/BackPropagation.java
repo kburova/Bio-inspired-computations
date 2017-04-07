@@ -1,7 +1,7 @@
+import javax.swing.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.DoubleSummaryStatistics;
-import java.util.Random;
+import java.lang.reflect.Array;
+import java.util.*;
 
 /**
  Project 4. Neural Nets
@@ -12,11 +12,12 @@ public class BackPropagation {
 
     String trainFile, validateFile, testFile;
     BufferedWriter bw;
+    String problemName = "Xor";
     private int numberOfInputs = 2;
-    private int numberOfLayers = 3;
-    private int [] numberOfNeurons = {2,3,2};
-    private double learningRate = 0.5;
-    private int numberOfEpochs = 15000;
+    private int numberOfLayers = 1;
+    private int [] numberOfNeurons = {3};
+    private double learningRate = 1;
+    private int numberOfEpochs = 1000;
 
     private double [] input;
     private double [] outputWeights;
@@ -34,7 +35,7 @@ public class BackPropagation {
 
     public BackPropagation(String trainFile, String validateFile, String testFile){
         try {
-            bw = new BufferedWriter(new FileWriter("report_+" + numberOfLayers + "_" + numberOfNeurons + "_" + numberOfEpochs + ".csv"));
+            bw = new BufferedWriter(new FileWriter(problemName + "_" + numberOfLayers + "_" + Arrays.toString(numberOfNeurons) + "_" + numberOfEpochs+"_"+learningRate + ".csv"));
         }catch (IOException e){}
         this.trainFile = trainFile;
         this.validateFile = validateFile;
@@ -206,17 +207,17 @@ public class BackPropagation {
                 bw.write(i + "," + RMSE.get(i) + "\n");
             }
             bw.flush();
+
         }catch (IOException e){
             e.printStackTrace();
         }
     }
-    public double testNetwork() {
+    public void testNetwork() {
         try{
-            double sum = 0.0;
-            double error;
-            int numOfPatterns = 0;
             String line;
-            bw.write("-----,testing network, ----\nExpected,Computed\n");
+            int solved = 0;
+            int notSolved  = 0;
+            bw.write("-----,testing network, ----\nExpected,Computed, Computed real, Is solved\n");
             BufferedReader br = new BufferedReader(new FileReader(testFile));
             while ( (line = br.readLine()) != null ) {
                 String[] vals = line.split(" ");
@@ -225,34 +226,66 @@ public class BackPropagation {
                 }
                 expectedOutput = Double.valueOf(vals[vals.length-1]);
                 computeOutputs();
-                bw.write(expectedOutput+","+outputSigma+"\n");
-                numOfPatterns++;
-                sum += Math.pow((expectedOutput - outputSigma),2);
+                long result = Math.round(outputSigma);
+                bw.write(expectedOutput+","+ result+","+ outputSigma);
+                if (expectedOutput != result){
+                    bw.write(", no\n");
+                    notSolved++;
+                }else {
+                    bw.write(",yes\n");
+                    solved++;
+                }
             }
-            error = Math.sqrt(sum/(2.0*numOfPatterns));
+            double accuracy = 1.0 * solved/(solved+notSolved);
+            bw.write("Accuracy percentage: ," + accuracy*100 + "%\n");
             br.close();
             bw.flush();
             bw.close();
-            return error;
         }catch (IOException e){
             e.getStackTrace();
         }
-        return 0.0;
     }
 
-    public double run(){
+    public void run(){
         for (int i = 0; i < numberOfEpochs; i++){
             trainNetwork();
             validateNetwork();
-            printRMSE();
         }
-        return testNetwork();
+        printRMSE();
+        testNetwork();
     }
     public static void main(String[] args) {
         if (args.length != 3){
             System.out.println("Usage: java BackPropagation [train.txt] [validate.txt] [test.txt] ");
         }
+//        try{
+//            Random r = new Random();
+//            BufferedWriter bw  = new BufferedWriter(new FileWriter("xor/training.txt"));
+//            for (int i = 0; i < 200; i++){
+//                int a = r.nextInt(2);
+//                int b = r.nextInt(2);
+//                bw.write(a+" "+ b +" "+ (a^b) + "\n");
+//            }
+//            bw.flush();
+//            bw.close();
+//            bw  = new BufferedWriter(new FileWriter("xor/validation.txt"));
+//            for (int i = 0; i < 100; i++){
+//                int a = r.nextInt(2);
+//                int b = r.nextInt(2);
+//                bw.write(a+" "+ b +" "+ (a^b) + "\n");
+//            }
+//            bw.flush();
+//            bw.close();
+//            bw  = new BufferedWriter(new FileWriter("xor/testing.txt"));
+//            for (int i = 0; i < 50; i++){
+//                int a = r.nextInt(2);
+//                int b = r.nextInt(2);
+//                bw.write(a+" "+ b +" "+ (a^b) + "\n");
+//            }
+//            bw.flush();
+//            bw.close();
+//        }catch (IOException e){}
         BackPropagation bp = new BackPropagation(args[0],args[1],args[2]);
-        System.out.println(bp.run());
+        bp.run();
     }
 }
