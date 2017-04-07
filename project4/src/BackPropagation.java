@@ -11,11 +11,12 @@ import java.util.Random;
 public class BackPropagation {
 
     String trainFile, validateFile, testFile;
+    BufferedWriter bw;
     private int numberOfInputs = 2;
     private int numberOfLayers = 3;
-    private int [] numberOfNeurons = {2, 3, 2};
-    private double learningRate = 1.3;
-    private int numberOfEpochs = 50000;
+    private int [] numberOfNeurons = {2,3,2};
+    private double learningRate = 0.5;
+    private int numberOfEpochs = 15000;
 
     private double [] input;
     private double [] outputWeights;
@@ -32,6 +33,9 @@ public class BackPropagation {
     ArrayList <Double> RMSE;
 
     public BackPropagation(String trainFile, String validateFile, String testFile){
+        try {
+            bw = new BufferedWriter(new FileWriter("report_+" + numberOfLayers + "_" + numberOfNeurons + "_" + numberOfEpochs + ".csv"));
+        }catch (IOException e){}
         this.trainFile = trainFile;
         this.validateFile = validateFile;
         this.testFile = testFile;
@@ -70,7 +74,7 @@ public class BackPropagation {
             }
         }
         for (int i = 0; i < numberOfNeurons[numberOfNeurons.length-1]; i++){
-            outputWeights[i] = (rand.nextInt((100 - (-100)) + 1) - 100) / 1000.0;;
+            outputWeights[i] = (rand.nextInt((100 - (-100)) + 1) - 100) / 1000.0;
             //System.out.print(weight+" ");
         }
         outputBiasWeight = (rand.nextInt((100 - (-100)) + 1) - 100) / 1000.0;
@@ -132,11 +136,11 @@ public class BackPropagation {
             for (int j = 0; j < numberOfNeurons[i]; j++) {
                 if (i == 0){
                     for (int c = 0; c < numberOfInputs; c++){
-                        hiddenWeights[i][j][c] += learningRate * hiddenDelta[i][j] * input[c];
+                        hiddenWeights[i][j][c] += ( learningRate * hiddenDelta[i][j] ) * input[c];
                     }
                 }else{
                     for (int c = 0; c < numberOfNeurons[i - 1]; c++ ){
-                        hiddenWeights[i][j][c] += learningRate * hiddenDelta[i][j] * hiddenSigma[i-1][c];
+                        hiddenWeights[i][j][c] += ( learningRate * hiddenDelta[i][j] ) * hiddenSigma[i-1][c];
                     }
                 }
                 hiddenBiasWeight[i][j] += learningRate * hiddenDelta[i][j];
@@ -174,7 +178,7 @@ public class BackPropagation {
         double rmse;
         try{
             String line;
-            BufferedReader br = new BufferedReader(new FileReader(trainFile));
+            BufferedReader br = new BufferedReader(new FileReader(validateFile));
             while ( (line = br.readLine()) != null ) {
                 String[] vals = line.split(" ");
                 for (int i = 0; i < numberOfInputs; i++){
@@ -195,34 +199,60 @@ public class BackPropagation {
 
     private void printRMSE(){
         try{
-            BufferedWriter bw = new BufferedWriter(new FileWriter("report.csv"));
             bw.write("Project 4, CS420\n Artificial, Neural Nets\nCompleted by:, Ksenia Burova\n\n\n");
             bw.write("Epoch #, RMSE\n");
             for (int i = 0; i < RMSE.size(); i++) {
+                System.out.println(i+" "+RMSE.get(i));
                 bw.write(i + "," + RMSE.get(i) + "\n");
             }
             bw.flush();
-            bw.close();
         }catch (IOException e){
             e.printStackTrace();
         }
     }
-    public void testNetwork() {}
+    public double testNetwork() {
+        try{
+            double sum = 0.0;
+            double error;
+            int numOfPatterns = 0;
+            String line;
+            bw.write("-----,testing network, ----\nExpected,Computed\n");
+            BufferedReader br = new BufferedReader(new FileReader(testFile));
+            while ( (line = br.readLine()) != null ) {
+                String[] vals = line.split(" ");
+                for (int i = 0; i < numberOfInputs; i++){
+                    input[i] = Double.valueOf(vals[i]);
+                }
+                expectedOutput = Double.valueOf(vals[vals.length-1]);
+                computeOutputs();
+                bw.write(expectedOutput+","+outputSigma+"\n");
+                numOfPatterns++;
+                sum += Math.pow((expectedOutput - outputSigma),2);
+            }
+            error = Math.sqrt(sum/(2.0*numOfPatterns));
+            br.close();
+            bw.flush();
+            bw.close();
+            return error;
+        }catch (IOException e){
+            e.getStackTrace();
+        }
+        return 0.0;
+    }
 
-    public void run(){
+    public double run(){
         for (int i = 0; i < numberOfEpochs; i++){
-            System.out.println(i);
             trainNetwork();
             validateNetwork();
             printRMSE();
         }
-        testNetwork();
+        return testNetwork();
     }
     public static void main(String[] args) {
         if (args.length != 3){
             System.out.println("Usage: java BackPropagation [train.txt] [validate.txt] [test.txt] ");
         }
         BackPropagation bp = new BackPropagation(args[0],args[1],args[2]);
-        bp.run();
+        System.out.println(bp.run());
     }
 }
