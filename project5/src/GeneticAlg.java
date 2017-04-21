@@ -1,3 +1,5 @@
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Random;
 
 import static java.lang.Math.pow;
@@ -6,6 +8,7 @@ import static java.lang.Math.pow;
 
 public class GeneticAlg {
 
+    double parent1, parent2;
     int numOfGens;
     int populationSize;
     double mutationProb;
@@ -13,6 +16,12 @@ public class GeneticAlg {
     int seed;
     int numOfGenerations;
     String [] population;
+    String [] offsprings;
+
+    double [] fitness;
+    double [] normalizedFitness;
+    double [] runningFitness;
+    Random r = new Random();
     int numberOfRuns = 1;
 
     public GeneticAlg(int numOfGens,
@@ -30,11 +39,14 @@ public class GeneticAlg {
         this.numOfGenerations = numOfGenerations;
 
         population = new String[populationSize];
+        offsprings = new String[populationSize];
+        fitness = new double[populationSize];
+        normalizedFitness = new double[populationSize];
+        runningFitness = new double[populationSize];
     }
 
 
     String getRandomBitString(int size){
-        Random r = new Random();
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0;i < size; i++){
@@ -45,21 +57,45 @@ public class GeneticAlg {
 
     void runExperiment(){
         for (int i = 0; i < numberOfRuns; i++){
-
+            double totalFitness = 0.0;
+            double totalNormFitness = 0.0;
             /** generate population **/
             for ( int p = 0; p < populationSize; p++ ){
                 population[p] = getRandomBitString(numOfGens);
+                fitness[p] = calculateFitness(population[p]);
+                totalFitness += fitness[p];
+            }
+            for ( int p = 0; p < populationSize; p++ ){
+               normalizedFitness[p] = fitness[p] / totalFitness;
+               totalNormFitness += normalizedFitness[p];
+               runningFitness[p] = totalNormFitness;
+               System.out.printf("%d %.8f ",p,totalNormFitness);
+            }
+            System.out.println();
+            for (int j = 0; j < populationSize/2; j++){
 
-                calculateFitness(population[p]);
-                /** calculate fitness for each individual **/
+                /** select 2 parents **/
+                double r1 = r.nextDouble();
+                double r2 = r.nextDouble();
+                parent1 = parent2 = (Arrays.binarySearch( runningFitness, r1 ) + 1) * -1 ;
+                while (parent1 == parent2) {
+                    parent2 = (Arrays.binarySearch(runningFitness, r2) + 1) * -1;
+                }
+//                System.out.println( r1+" "+ r2+" "+ parent1+" "+parent2);
+                double crossover = r.nextDouble();
+                if  (crossover <= crossoverProbability){
+                    
+                }else{
+                    offsprings = population.clone();
+                }
             }
         }
+
     }
 
-    void calculateFitness( String individualGenes ){
+    private double calculateFitness( String individualGenes ){
         int genes = Integer.parseInt(individualGenes,2);
-        System.out.println(genes + " " + individualGenes);
-        double fitness = pow( (genes / pow(2, numOfGens) ), 10);
+        return pow( ( 1.0*genes / pow(2, numOfGens) ), 10);
     }
 
     public static void main(String[] args) {
