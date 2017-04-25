@@ -56,15 +56,21 @@ public class GeneticAlg {
         avgCorrectBits = new ArrayList<>();
         bestCorrectBits = new ArrayList<>();
         try {
-            bw = new BufferedWriter(new FileWriter("data_"+populationSize+"_"+numOfGens+ "_"+mutationProb+ "_"+crossoverProbability+"_"+seed+"_"+ numOfGenerations+ ".csv"));
+            bw = new BufferedWriter(new FileWriter("data4_"+populationSize+"_"+numOfGens+ "_"+mutationProb+ "_"+crossoverProbability+"_"+seed+"_"+ numOfGenerations+ ".csv"));
         }catch (IOException e){}
 
     }
 
-
     String getRandomBitString(int size){
-        int generation = r.nextInt( (int)pow(2,size));
-        String s = String.format("%"+size+"s", Integer.toBinaryString(generation)).replace(' ', '0');
+        int generation;
+        String s = "";
+        if (size <=32 ) {
+            generation = r.nextInt((int) pow(2, size));
+            s = String.format("%" + size + "s", Integer.toBinaryString(generation)).replace(' ', '0');
+        }else{
+           for (int i = 0; i < size; i++)
+               s += Integer.toString( r.nextInt(2));
+        }
         return s;
     }
 
@@ -81,11 +87,9 @@ public class GeneticAlg {
                 /** calculate fitness for each individual**/
 
                 for (int p = 0; p < populationSize; p++) {
-                    System.out.print(population[p] + " ");
                     fitness[p] = calculateFitness(population[p]);
                     totalFitness += fitness[p];
                 }
-                System.out.println();
                 /** calculate normalized fitness and running normalized fitness
                  for future probabilistic choice of parents**/
                 for (int p = 0; p < populationSize; p++) {
@@ -180,8 +184,13 @@ public class GeneticAlg {
         }catch (IOException e){}
     }
     private double calculateFitness( String individualGenes ){
-        int genes = Integer.parseInt(individualGenes,2);
-        return pow( ( 1.0*genes / pow(2, numOfGens) ), 10);
+        if (numOfGens <= 32) {
+            int genes = Integer.parseInt(individualGenes, 2);
+            return pow((1.0 * genes / pow(2, numOfGens)), 10);
+        }else{
+            long genes = Long.parseLong(individualGenes, 2);
+            return pow((1.0 * genes / pow(2, numOfGens)), 10);
+        }
     }
 
     public int findMax(double [] arr){
