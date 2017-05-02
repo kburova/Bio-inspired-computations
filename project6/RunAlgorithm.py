@@ -14,13 +14,13 @@ if len(sys.argv) != 6:
 numberOfEpochs = int(sys.argv[1]) # 1000
 numberOParticles = int(sys.argv[2]) # 100
 inertia = float(sys.argv[3]) # 0.1
-cognition = float(sys.argv[4]) # 0.5
-social = float(sys.argv[5]) # 0.5
-velocity = 7
+cognition = float(sys.argv[4]) # 2
+social = float(sys.argv[5]) # 2
+velocity = 3
 
 colors = [ "#F90F04", "#FE8802", "#FEEB02", "#65FE02", "#0DC759", "#06D5BF","#03D6FC", "#0369FC", "#8755E6", "#EC1EF2" ]
 
-particlesValues = [30, 50, 100]
+particlesValues = [20, 50, 100, 150, 200]
 partEpochsToConv = []
 partAveDistance = []
 partConverged = []
@@ -44,7 +44,7 @@ socAveDistance = []
 socConverged = []
 socFitness = []
 
-velocityValues = [1, 3, 5, 7, 10]
+velocityValues = [1, 2, 3, 5, 7, 10]
 velEpochsToConv = []
 velAveDistance = []
 velConverged = []
@@ -60,7 +60,9 @@ def plotEpochsToConvergence( x, bars, valToChange):
     figure = plt.figure()
     subplt = plt.subplot(1, 1, 1, axisbg='#F5F7FC')
     y_pos = np.arange( len(x) )
-    subplt.bar(y_pos, bars, align="center", alpha=0.5)
+    barlist = subplt.bar(y_pos, bars, align="center", alpha=0.5)
+    for ind, b in enumerate(barlist):
+        b.set_color(colors[ind])
     plt.xticks(y_pos, x)
     plt.ylabel("Number Of Epochs")
     plt.xlabel( valToChange )
@@ -75,7 +77,9 @@ def plotConvergedPercentage(x, bars, valToChange):
     figure = plt.figure()
     subplt = plt.subplot(1, 1, 1, axisbg='#F5F7FC')
     y_pos = np.arange(len(x))
-    subplt.bar(y_pos, bars, align="center", alpha=0.5)
+    barlist = subplt.bar(y_pos, bars, align="center", alpha=0.5)
+    for ind, b in enumerate(barlist):
+        b.set_color(colors[ind])
     plt.xticks(y_pos, x)
     plt.ylabel("Particles Percent")
     plt.xlabel(valToChange)
@@ -148,7 +152,7 @@ for problem in range(1, 3):
 
     name = "Particles #"
     plotEpochsToConvergence(particlesValues, partEpochsToConv, name)
-    plotConvergedPercentage(particlesValues, partEpochsToConv, name)
+    plotConvergedPercentage(particlesValues, partConverged, name)
     plotAveDistance(particlesValues, partAveDistance, name)
     plotAveFitness(particlesValues, partFitness, name)
 
@@ -170,7 +174,7 @@ for problem in range(1, 3):
 
     name = "Inertia"
     plotEpochsToConvergence(inertiaValues, inertiaEpochsToConv, name)
-    plotConvergedPercentage(inertiaValues, inertiaEpochsToConv, name)
+    plotConvergedPercentage(inertiaValues, inertiaConverged, name)
     plotAveDistance(inertiaValues, inertiaAveDistance,name)
     plotAveFitness(inertiaValues, inertiaFitness,name)
 
@@ -192,7 +196,7 @@ for problem in range(1, 3):
 
     name = "Cognition"
     plotEpochsToConvergence(cognitionValues, cogEpochsToConv, name)
-    plotConvergedPercentage(cognitionValues, cogEpochsToConv, name)
+    plotConvergedPercentage(cognitionValues, cogConverged, name)
     plotAveDistance(cognitionValues, cogAveDistance, name)
     plotAveFitness(cognitionValues, cogFitness, name)
 
@@ -214,7 +218,7 @@ for problem in range(1, 3):
 
     name = "Social"
     plotEpochsToConvergence(socialValues, socEpochsToConv, name)
-    plotConvergedPercentage(socialValues, socEpochsToConv, name)
+    plotConvergedPercentage(socialValues, socConverged, name)
     plotAveDistance(socialValues, socAveDistance, name)
     plotAveFitness(socialValues, socFitness, name)
 
@@ -236,6 +240,6 @@ for problem in range(1, 3):
 
     name = "Velocity"
     plotEpochsToConvergence(velocityValues, velEpochsToConv, name)
-    plotConvergedPercentage(velocityValues, velEpochsToConv, name)
+    plotConvergedPercentage(velocityValues, velConverged, name)
     plotAveDistance(velocityValues, velAveDistance, name)
     plotAveFitness(velocityValues, velFitness, name)
