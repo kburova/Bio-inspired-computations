@@ -6,8 +6,10 @@ from random import uniform
 import math
 import copy
 # import libraries for ploting
-import plotly.plotly as py
-import plotly.graph_objs as go
+import numpy as np
+import os
+import matplotlib.pyplot as plt
+
 if len(sys.argv) != 7:
     print "Usage: SwarmOptimization.py [NumOfEpochs] [NumOfParticles] [Inertia] [Cognition] [SocialParam] [problem #]"
     exit(0)
@@ -21,8 +23,17 @@ problem = int(sys.argv[6])
 maxima = []
 errors_x = []
 errors_y = []
+
 if problem != 1 and problem != 2:
     print "Usage: problem number can be 1 or 2"
+
+experiment_folder = str(numberOParticles)+"_"+str(inertia)+"_"+str(cognition)+"_"+str(social)
+problem_folder = "P"+sys.argv[6]
+
+if not os.path.exists(problem_folder):
+    os.makedirs(problem_folder)
+if not os.path.exists(problem_folder + "/" + experiment_folder):
+    os.makedirs(problem_folder + "/" + experiment_folder)
 
 worldWidth = 100
 worldHeight = 100
@@ -30,6 +41,42 @@ maxVelocity = 7
 threshold = 0.01
 
 particles = []
+
+# Plot Converged particles using X and Y coordinates
+def plotSwarm(iteration):
+    filename = problem_folder+"/"+experiment_folder+"/Scatter-"+str(iteration)+".png"
+    X = []
+    Y = []
+    for particle in particles:
+        X.append(particle.p.x)
+        Y.append(particle.p.y)
+
+    figure = plt.figure()
+    subplt = plt.subplot(1,1,1,axisbg='#F5F7FC')
+    subplt.scatter(X, Y, s=50, marker = "o", c = "#621CEF", alpha=0.5, label = "Particle")
+    subplt.scatter(SwarmBest.x, SwarmBest.y, s=100, marker = 'o', c = "#04FDF2", label = "Global Best")
+    plt.title(" Converged Particles")
+    plt.xlabel("Particle X coordinates")
+    plt.ylabel("Particle Y coordinates")
+    plt.grid()
+    figure.savefig(filename)
+    # plt.close(figure)
+
+def plotErrors(iterations):
+    filename = problem_folder + "/" + experiment_folder + "/Errors-" + str(iterations) + ".png"
+    x = range(0,iterations)
+    figure = plt.figure()
+    subplt = plt.subplot(1, 1, 1, axisbg='#F5F7FC')
+    subplt.plot(x, errors_x, marker='o', linestyle='--', color='#03BCF8', label='X Error', linewidth = 2.0)
+    subplt.plot(x, errors_y, marker='o', linestyle='--', color='#F80372', label='Y Error', linewidth = 2.0)
+    plt.xlabel('Number of Epochs')
+    plt.ylabel('Error value')
+    plt.title('Distance Error')
+    plt.legend()
+    plt.grid()
+    figure.savefig(filename)
+# plt.show()
+
 class Position:
     def __init__(self, x, y):
         self.x = x
@@ -51,8 +98,8 @@ class Particle:
             localBest = self.neighborhood[0]
         elif Q(self.neighborhood[1].p) > Q(localBest.p):
             localBest = self.neighborhood[1]
-        self.v.x = inertia * self.v.x + cognition * r1 * (self.bp.x - self.p.x) + social * r2 * (SwarmBest.x - self.p.x) + 1.5 * r3 * (localBest.p.x - self.p.x)
-        self.v.y = inertia * self.v.y + cognition * r1 * (self.bp.y - self.p.y) + social * r2 * (SwarmBest.y - self.p.y) + 1.5 * r3 * (localBest.p.y - self.p.y)
+        self.v.x = inertia * self.v.x + cognition * r1 * (self.bp.x - self.p.x) + social * r2 * (SwarmBest.x - self.p.x)  #+ 1.5 * r3 * (localBest.p.x - self.p.x)
+        self.v.y = inertia * self.v.y + cognition * r1 * (self.bp.y - self.p.y) + social * r2 * (SwarmBest.y - self.p.y)  #+ 1.5 * r3 * (localBest.p.y - self.p.y)
         #scale velocity if necessary
         distance = math.sqrt( math.pow(self.v.x, 2) + math.pow(self.v.y, 2))
         if math.fabs(self.v.x) > pow(maxVelocity,2):
@@ -109,8 +156,10 @@ for i in range(numberOParticles):
         #check if best and if so update swarm best value
         if Q(initPosition) < Q(SwarmBest):
             SwarmBest = copy.deepcopy(initPosition)
+            
 numOfIterations = 0
 setNeiborhood()
+averageDistance = []
 
 while True:
     error_x = 0.0
@@ -133,14 +182,12 @@ while True:
     numOfIterations += 1
     print numOfIterations, error_x, error_y
 
+    if (numOfIterations > numberOfEpochs):
+        print "Never converged!!!"
+        break
+
     if (error_x < threshold and error_y < threshold):
         break
 
-trace = go.Scatter(
-    x = errors_x,
-    y = errors_y,
-    mode = 'markers'
-)
-
-data = [trace]
-py.iplot(data, filename='basic-scatter')
+plotSwarm(numOfIterations)
+plotErrors(numOfIterations)
